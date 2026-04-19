@@ -52,6 +52,53 @@ public:
 	}
 };
 
+class Shop {
+public:
+	void visit(Creature& player) {
+		int choice;
+		bool exiting = false;
+
+		while (!exiting) {
+			cout << "\n--- ДОБРО ПОЖАЛОВАТЬ В МАГАЗИН ---" << endl;
+			cout << "Ваше золото: " << player.getMoney() << endl;
+			cout << "1. Купить Стальной Меч (Урон +20) - 50 монет" << endl;
+			cout << "2. Купить Усиленную Броню (Защита 5.0) - 60 монет" << endl;
+			cout << "3. Купить Лечебное зелье (Восстанавливает 30 HP) - 20 монет" << endl;
+			cout << "0. Выйти из магазина" << endl;
+			cout << "Выберите действие: ";
+			cin >> choice;
+
+			switch (choice) {
+			case 1:
+				if (player.spendMoney(50)) {
+					player.equipWeapon("Стальной Меч", 20);
+					cout << "Вы купили Стальной Меч!" << endl;
+				}
+				else cout << "Недостаточно золота!" << endl;
+				break;
+			case 2:
+				if (player.spendMoney(60)) {
+					player.equipArmor("Усиленная Броня", 5.0);
+					cout << "Вы купили Усиленную Броню!" << endl;
+				}
+				else cout << "Недостаточно золота!" << endl;
+				break;
+			case 3:
+				if (player.spendMoney(20)) {
+					player.heal(30);
+				}
+				else cout << "Недостаточно золота!" << endl;
+				break;
+			case 0:
+				exiting = true;
+				break;
+			default:
+				cout << "Неверный выбор." << endl;
+			}
+		}
+	}
+};
+
 class Creature {
 private:
 	// имя героя
@@ -146,7 +193,28 @@ public:
 		name_armor = armor.getName();
 		val_armor = armor.getValArmor();
 	}
-
+	//Экипировка брони
+	void equipArmor(string name_new_armor, double new_val_def_armor) {
+		armor.setValue(name_new_armor, new_val_def_armor);
+	}
+	
+	// Работа с деньгами
+	double getMoney() const { return money; }
+	void addMoney(double amount) { money += amount; }
+	bool spendMoney(double amount) {
+		if (money >= amount) {
+			money -= amount;
+			return true;
+		}
+		return false;
+	}
+	
+	// Лечение
+	void heal(double amount) {
+		HP += amount;
+		if (HP > HP_max) HP = HP_max;
+		cout << "Вы восстановили здоровье. Текущее HP: " << HP << "/" << HP_max << endl;
+	}
 	
 };
 
@@ -191,46 +259,35 @@ void loadGame(Creature& player, int& round) {
 
 int main() {
 	setlocale(LC_ALL, "ru");
-	
-	// объект класса игрока
 	Creature player("Player", 100, 5, "Меч", 10, "Латы", 3);
-	// количество раундов
+	player.addMoney(100); // Дадим немного денег для теста
+
+	Shop gameShop;
 	int round = 1;
 	int final_round = 100;
 
-	bool who_fight = true;
-	while (round < final_round) {
-		// действие: бой, сохраниение и т. д.
+	while (round <= final_round && player.isLife()) {
+		cout << "\n--- РАУНД " << round << " ---" << endl;
+
+		// Проверка на магазин каждые 10 раундов
+		if (round % 10 == 0) {
+			cout << "Вы нашли лавку торговца!" << endl;
+			gameShop.visit(player);
+		}
+
+		cout << "Введите команду (B - Бой, S - Сохранить): ";
 		char action;
 		cin >> action;
-		while (action != 'S' && action != 'B') {
-		
-		}
-		switch (action)
-		{
-		case 'B':
-			while (round < final_round && player.isLife())
-				{
-				// система боя. нужно реализовать
 
-					who_fight = !who_fight;
-				}
+		if (action == 'B') {
+			//Короче тут мы типа монстра убили и такие
+			cout << "Вы победили монстра!" << endl;
+			player.addMoney(15);
 			round++;
-
-			break;
-
-		case 'S':
-			saveGame(player, round);
-
-		default:
-			break;
 		}
-		
-
-		if (action == 'S');
-
-		
-		
+		else if (action == 'S') {
+			saveGame(player, round);
+		}
 	}
 
 	return 0;
